@@ -76,6 +76,7 @@ app.delete('/api/persons/:id', (request, response) => {
   response.status(204).end()
 })
 
+// Shows info for the backend
 app.get('/info', (request, response) => {
   const options = {
     weekday: 'short',  
