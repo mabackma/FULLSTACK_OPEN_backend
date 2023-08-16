@@ -2,6 +2,20 @@ const express = require('express')
 const app = express()
 app.use(express.json())
 
+const morgan = require('morgan')
+
+// Define a custom token for request body
+morgan.token('reqbody', (req) => {
+  if (req.method === 'POST') {
+    const { id, ...bodyWithoutId } = req.body
+    return JSON.stringify(bodyWithoutId)
+  }
+  return ''
+})
+
+// Configure morgan middleware
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :reqbody'))
+
 let persons = [
   { 
     "id": 1,
