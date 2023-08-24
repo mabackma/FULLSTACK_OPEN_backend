@@ -22,83 +22,99 @@ test('blogs are returned as json', async () => {
 }, 10000)
 
 test('Blog object has "id" field', async () => {
-  // Save a sample blog to the testing database
-  const sampleBlog = new Blog({
+  // Save a new blog to the testing database
+  const newBlog = new Blog({
     title: 'Id Test Blog Title',
     author: 'Id Test Blog Author',
     url: 'Id Test Blog Url',
     likes: 1
   })
-  const savedBlog = await sampleBlog.save()
+  
+  const response = await api
+    .post('/api/blogs')
+    .send(newBlog.toJSON())
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
 
   // Check that returned object has "id" field
-  expect(savedBlog.id).toBeDefined()
+  expect(response.body.id).toBeDefined()
 }, 10000)
 
 test('blogs are saved with POST', async () => {
-  const initialResponse = await api.get('/api/blogs').expect(200)
-  const initialBlogs = initialResponse.body
 
-  // Save a sample blog to the testing database
-  const sampleBlog = new Blog({
-      title: 'POST Test Blog Title',
-      author: 'POST Test Blog Author',
-      url: 'POST Test Blog Url',
-      likes: 1
-    })
-  await sampleBlog.save()
+  // Save a new blog to the testing database
+  const newBlog = new Blog({
+    title: 'POST Test Blog Title',
+    author: 'POST Test Blog Author',
+    url: 'POST Test Blog Url',
+    likes: 1
+  })
+  await api
+    .post('/api/blogs')
+    .send(newBlog.toJSON())
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
+    
   
-  const currentResponse = await api.get('/api/blogs').expect(200)
-  const currentBlogs = currentResponse.body
+  const blogsAtEnd = await helper.blogsInDb()
 
-  // Compare the amount of initial blogs to the amount of current blog and make sure one was added
-  expect(currentBlogs.length).toEqual(initialBlogs.length + 1)
+  // Compare the amount of initial blogs to the amount of current blogs and make sure one was added
+  expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
+
+  const titles = blogsAtEnd.map(b => b.title)
+  expect(titles).toContain(
+    'POST Test Blog Title'
+  )
 }, 10000)
 
 test('"likes" field defaults to 0', async () => {
-  // Save a sample blog to the testing database
-  const sampleBlog = new Blog({
+  // Save a new blog to the testing database
+  const newBlog = new Blog({
     title: 'Likes Test Blog Title',
     author: 'Likes Test Blog Author',
     url: 'Likes Test Blog Url'
   })
-  const savedBlog = await sampleBlog.save()
+  const response = await api
+    .post('/api/blogs')
+    .send(newBlog.toJSON())
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
 
   // Check that returned object's "likes" field is 0
-  expect(savedBlog.likes).toEqual(0)
+  expect(response.body.likes).toEqual(0)
 }, 10000)
 
-/*
-describe('Missing properties is a bad request 400', () => {
-  test('POST responds with 400 if title is missing', async () => {
-    const blogWithoutTitle = {
-    // Omitting the title property
-    author: 'Missing Test Blog Author',
-    url: 'Missing Test Blog Url',
-    likes: 1
-    }
+test('fails with status code 400 if url is missing', async () => {
+  const blogWithoutUrl = {
+    title: "blog is missing url"
+  }
 
-    const response = await api.post('/api/blogs').send(blogWithoutTitle);
-  
-    // Check that the response status is 400
-    expect(response.status).toBe(400)
-  })
-  
-  test('POST responds with 400 if url is missing', async () => {
-    const blogWithoutUrl = {
-    title: 'Missing Test Blog Title',
-    author: 'Missing Test Blog Author',
-    // Omitting the url property
-    likes: 1
-    }
+  await api
+    .post('/api/blogs')
+    .send(blogWithoutUrl)
+    .expect(400)
 
-    const response = await api.post('/api/blogs').send(blogWithoutUrl);
+  const blogsAtEnd = await helper.blogsInDb()
 
-    // Check that the response status is 400
-    expect(response.status).toBe(400)
-  })
+  // Make sure no blogs were added
+  expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
 })
-*/
+
+test('fails with status code 400 if title is missing', async () => {
+  const blogWithoutTitle = {
+    url: "blog is missing title"
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(blogWithoutTitle)
+    .expect(400)
+
+  const blogsAtEnd = await helper.blogsInDb()
+
+  // Make sure no blogs were added
+  expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
+})
 
 afterAll(async () => {
   await mongoose.connection.close()
