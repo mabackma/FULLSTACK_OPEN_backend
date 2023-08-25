@@ -3,12 +3,7 @@ const Blog = require('../models/blog')
 const User = require('../models/user')
 
 blogsRouter.get('/', async (request, response) => {
-  const blogs = await Blog.find({})
-
-  // Check if the user field exists
-  if (blogs.user) {
-    blogs = await Blog.find({}).populate('user', 'username name')
-  }
+  const blogs = await Blog.find({}).find({}).populate('user', 'username name')
 
   const prettyBlogs = JSON.stringify(blogs, null, 2)
   response.type('application/json').send(prettyBlogs)
@@ -17,12 +12,16 @@ blogsRouter.get('/', async (request, response) => {
 blogsRouter.post('/', async (request, response) => {
   const blog = new Blog(request.body)
   if (request.body.user) {
-    const user = await User.findById(request.body.user.id);
+    const user = await User.findById(request.body.user.id)
+  }
+
+  if (request.body.user) {
+    user = await User.findById(request.body.user.id);
   }
 
   const savedBlog = await blog.save()
 
-  if (request.body.user) {
+  if (user) {
     user.blogs = user.blogs.concat(savedBlog._id)
     await user.save()
   }
