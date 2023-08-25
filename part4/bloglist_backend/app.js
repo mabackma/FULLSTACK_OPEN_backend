@@ -4,6 +4,7 @@ require('express-async-errors')
 const app = express()
 const cors = require('cors')
 const blogsRouter = require('./controllers/blogs')
+const usersRouter = require('./controllers/users')
 const middleware = require('./utils/middleware')
 const logger = require('./utils/logger')
 const mongoose = require('mongoose')
@@ -25,8 +26,11 @@ app.use(cors())
 app.use(express.json())
 app.use(middleware.requestLogger)
 
-// Defines base path for router
+// Defines base path for blogsRouter
 app.use('/api/blogs', blogsRouter)
+
+// Defines base path for usersRouter
+app.use('/api/users', usersRouter)
 
 app.use(middleware.unknownEndpoint)
 app.use(middleware.errorHandler)
