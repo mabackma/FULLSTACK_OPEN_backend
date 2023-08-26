@@ -26,6 +26,7 @@ test('Blog object has "id" field', async () => {
   const newBlog = new Blog({
     title: 'Id Test Blog Title',
     author: 'Id Test Blog Author',
+    user: '64e9468a989724eaae547364',   // a valid user ObjectId in testing database
     url: 'Id Test Blog Url',
     likes: 1
   })
