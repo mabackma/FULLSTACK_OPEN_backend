@@ -54,12 +54,3 @@ module.exports = {
   tokenExtractor,
   userExtractor
 }
-/*
-{
-  "title": "Test title2",
-  "author": "Test Author2",
-  "user":"asdf",
-  "url": "asdf",
-  "likes": 1
-}
-*/

@@ -1,7 +1,9 @@
 const mongoose = require('mongoose')
 const supertest = require('supertest')
+const bcryptjs = require('bcryptjs')
 const app = require('../app')
 const Blog = require('../models/blog')
+const User = require('../models/user')
 const helper = require('./test_helper')
 
 const api = supertest(app)
@@ -9,11 +11,28 @@ const api = supertest(app)
 beforeEach(async () => {
   await Blog.deleteMany({})
   await Blog.insertMany(helper.initialBlogs)
+
+  // Create a new user for testing
+  await User.deleteMany({});
+  const user = new User({
+    username: 'testuser',
+    name: 'Test User',
+    password: await bcryptjs.hash('testpassword', 10), // Hash the password
+  });
+  await user.save()
+
+  // Authenticate the test user and get the JWT token
+  const response = await api.post('/api/login').send({
+    username: 'testuser',
+    password: 'testpassword',
+  })
+  api.token = response.body.token
 })
 
 test('blogs are returned as json', async () => {
   const response = await api
     .get('/api/blogs')
+    .set('Authorization', `Bearer ${api.token}`) // Include the token in the request header
     .expect(200)
     .expect('Content-Type', /application\/json/)
   
@@ -33,6 +52,7 @@ test('Blog object has "id" field', async () => {
   
   const response = await api
     .post('/api/blogs')
+    .set('Authorization', `Bearer ${api.token}`) // Include the token in the request header
     .send(newBlog.toJSON())
     .expect(201)
     .expect('Content-Type', /application\/json/)
@@ -52,11 +72,11 @@ test('blogs are saved with POST', async () => {
   })
   await api
     .post('/api/blogs')
+    .set('Authorization', `Bearer ${api.token}`) // Include the token in the request header
     .send(newBlog.toJSON())
     .expect(201)
     .expect('Content-Type', /application\/json/)
     
-  
   const blogsAtEnd = await helper.blogsInDb()
 
   // Compare the amount of initial blogs to the amount of current blogs and make sure one was added
@@ -77,6 +97,7 @@ test('"likes" field defaults to 0', async () => {
   })
   const response = await api
     .post('/api/blogs')
+    .set('Authorization', `Bearer ${api.token}`) // Include the token in the request header
     .send(newBlog.toJSON())
     .expect(201)
     .expect('Content-Type', /application\/json/)
@@ -92,6 +113,7 @@ test('fails with status code 400 if url is missing', async () => {
 
   await api
     .post('/api/blogs')
+    .set('Authorization', `Bearer ${api.token}`) // Include the token in the request header
     .send(blogWithoutUrl)
     .expect(400)
 
@@ -108,6 +130,7 @@ test('fails with status code 400 if title is missing', async () => {
 
   await api
     .post('/api/blogs')
+    .set('Authorization', `Bearer ${api.token}`) // Include the token in the request header
     .send(blogWithoutTitle)
     .expect(400)
 
